@@ -106,21 +106,33 @@ public class SegmentTrie {
   public Matcher matcher() {
     Matcher m;
     if (!catchAll.isEmpty()) {
+        // Whenever there are catchAll tries,
+        // other matchers are ignored.
       m = new CatchAllMatcher(catchAll.keySet().iterator().next(), catchAll.values().iterator().next().data);
+
+      // The DataMatcher simply decorates the result with some data.
       if (data != null) {
         m = new LinearMatcher(Arrays.asList(new DataMatcher(data), m));
       }
     } else if (!wilds.isEmpty()) {
+        // 
       if (wilds.size() == 1 && data == null && childs.isEmpty()) {
         m = new WildMatcher(wilds.keySet().iterator().next(), wilds.values().iterator().next().matcher());
       } else {
         List<Matcher> matchers = new ArrayList<>();
+
+        // In case this is the last in the chain, attach data
         if (data != null) {
           matchers.add(new DataMatcher(data));
         }
+        
+        // Prioritize static matchers...
         if (!childs.isEmpty()) {
           matchers.add(staticMatcher());
         }
+
+        // ... but if no static matcher matches, consider 
+        // the wild ones.
         for (Map.Entry<Keyword, SegmentTrie> e : wilds.entrySet()) {
           matchers.add(new WildMatcher(e.getKey(), e.getValue().matcher()));
         }
